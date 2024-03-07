@@ -1,0 +1,6 @@
+- id: hallmark
+  name: hallmark
+  description: Validate changelogs against Common Changelog
+  entry: hallmark
+  language: node
+  files: CHANGELOG\.md$

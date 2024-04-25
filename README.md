@@ -5,41 +5,10 @@
 
 [![npm status](http://img.shields.io/npm/v/hallmark.svg)](https://www.npmjs.org/package/hallmark)
 [![node](https://img.shields.io/node/v/hallmark.svg)](https://www.npmjs.org/package/hallmark)
-[![Test](https://img.shields.io/github/workflow/status/vweevers/hallmark/Test?label=test)](https://github.com/vweevers/hallmark/actions/workflows/test.yml)
+[![Test](https://img.shields.io/github/actions/workflow/status/vweevers/hallmark/test.yml?branch=main&label=test)](https://github.com/vweevers/hallmark/actions/workflows/test.yml)
 [![JavaScript Style Guide](https://img.shields.io/badge/standard-informational?logo=javascript\&logoColor=fff)](https://standardjs.com)
 [![Markdown Style Guide](https://img.shields.io/badge/hallmark-informational?logo=markdown)](https://github.com/vweevers/hallmark)
 [![Common Changelog](https://common-changelog.org/badge.svg)](https://common-changelog.org)
-
-## Table of Contents
-
-<details><summary>Click to expand</summary>
-
-- [Why](#why)
-- [Quick Start](#quick-start)
-- [What You Might Do](#what-you-might-do)
-- [Requirements](#requirements)
-- [Rules](#rules)
-- [Usage](#usage)
-  - [Commands](#commands)
-    - [`lint [file...]`](#lint-file)
-    - [`fix [file...]`](#fix-file)
-    - [`cc add <target...>`](#cc-add-target)
-- [Package Options](#package-options)
-  - [`ignore`](#ignore)
-  - [`autolinkReferences`](#autolinkreferences)
-  - [`changelog`](#changelog)
-  - [`validateLinks`](#validatelinks)
-  - [`paddedTable`](#paddedtable)
-  - [`toc`](#toc)
-  - [`plugins`](#plugins)
-  - [`fixers`](#fixers)
-- [Opt-in Features](#opt-in-features)
-  - [Table of Contents](#table-of-contents-1)
-- [Reporters](#reporters)
-- [Install](#install)
-- [License](#license)
-
-</details>
 
 ## Why
 
@@ -185,9 +154,34 @@ Additional options for this command:
 
 Multiple targets can be provided, in no particular order. For example `hallmark cc add 1.1.0 1.2.0` which acts as a shortcut for `hallmark cc add 1.1.0 && hallmark cc add 1.2.0`.
 
-Works best on a linear git history. If `hallmark` encounters other tags in the commit range (which may happen if releases were made in parallel on other branches) it will stop there and not include further (older) commits.
+Works best on a linear git history without merge commits. If `hallmark` encounters other tags in the commit range it will stop there and not include further (older) commits.
 
 The `cc add` command also fixes markdown (both existing content and generated content) but only in `CHANGELOG.md`. After you tweak the release following [Common Changelog](https://common-changelog.org) you may want to run `hallmark fix`.
+
+Git [trailers](https://git-scm.com/docs/git-interpret-trailers) ("lines that look similar to RFC 822 e-mail headers, at the end of the otherwise free-form part of a commit message") can provide structured information to the generated changelog. The following trailer keys are supported (case-insensitive):
+
+- `Category`: one of `change`, `addition`, `removal`, `fix`, or `none`. If `none` then the commit will be excluded from the changelog. If not present then the change will be listed under Uncategorized and will require manual categorization.
+- `Notice`: a [notice](https://common-changelog.org/#23-notice) for the release. If multiple commits contain a notice, they will be joined as sentences (i.e. ending with a dot) separated by a space.
+- `Ref`, `Refs`, `Fixes`, `Closes` or `CVE-ID`: a numeric reference in the form of `#N`, `PREFIX-N` or `CVE-N-N` where `N` is a number and `PREFIX` is at least 2 letters. For example `#123`, `GH-123`, `JIRA-123` or `CVE-2024-123`. Can be repeated, either with multiple trailer lines or by separating references with a comma - e.g. `Ref: #1, #2`. Non-numeric references are ignored.
+- `Co-Authored-By`: co-author in the form of `name <email>`. Can be repeated.
+
+For example, the following commit (which has Bob as git author, let's say):
+
+```
+Bump math-utils to 4.5.6
+
+Ref: JIRA-123
+Category: change
+Co-Authored-By: Alice <alice@example.com>
+```
+
+Turns into:
+
+```md
+## Changed
+
+- Bump math-utils to 4.5.6 (d23ba8f) (JIRA-123) (Bob, Alice)
+```
 
 #### `cc init`
 
@@ -273,10 +267,6 @@ Boolean. Set to `false` to skip validating links. Useful when a markdown file us
 
 Boolean. Set to `false` to keep markdown tables compact. A temporary option until we decide on and are able to lint a style ([`3210a96`](https://github.com/vweevers/hallmark/commit/3210a96)).
 
-### `toc`
-
-Boolean. Set to `false` to skip generating (or replacing) a Table of Contents. A temporary option until we write a more flexible plugin ([#36](https://github.com/vweevers/hallmark/issues/36)).
-
 ### `plugins`
 
 An array of extra plugins, to be applied in both lint and fix mode.
@@ -284,20 +274,6 @@ An array of extra plugins, to be applied in both lint and fix mode.
 ### `fixers`
 
 An array of extra plugins, to be applied in fix mode.
-
-## Opt-in Features
-
-### Table of Contents
-
-_Note: this feature is likely to change ([#36](https://github.com/vweevers/hallmark/issues/36))._
-
-Add this heading to a markdown file:
-
-```markdown
-## Table of Contents
-```
-
-Running `hallmark fix` will then create or update a table of contents.
 
 ## Reporters
 
